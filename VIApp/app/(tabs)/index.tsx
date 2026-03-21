@@ -10,6 +10,7 @@ import {
   StatusBar,
   Image,
 } from 'react-native';
+import {router} from "expo-router";
 
 // Geometric logo matching the VIApp brand mark
 const VIAppLogo = () => (
@@ -98,7 +99,7 @@ export default function RegisterScreen({ navigation }: any) {
           {/* Login link */}
           <View style={styles.loginRow}>
             <Text style={styles.loginText}>ALREADY HAVE AN ACCOUNT? </Text>
-            <TouchableOpacity onPress={() => navigation?.navigate('Login')}>
+            <TouchableOpacity onPress={() => router.push('/')}>
               <Text style={styles.loginLink}>LOG IN</Text>
             </TouchableOpacity>
           </View>
