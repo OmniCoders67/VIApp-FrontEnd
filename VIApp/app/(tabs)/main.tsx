@@ -1,37 +1,66 @@
 ﻿import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from "expo-router";
+import { useAuth } from '../../context/AuthContext';
 
 const menuItems = [
     {
         id: 'checkin',
         label: 'CHECK-IN\nATTENDANCE',
         icon: '👥',
+        route: '/(tabs)/qrscanner',
+        adminOnly: false,
+        fullWidth: false,
     },
     {
         id: 'announcements',
         label: 'ANNOUNCEMENTS\n& EVENTS',
         icon: '📣',
+        route: '/(tabs)/Announcement',
+        adminOnly: false,
+        fullWidth: false,
     },
     {
         id: 'menu',
         label: "TODAY'S MENU",
         icon: '🍽️',
+        route: '/(tabs)/Menu',
+        adminOnly: false,
+        fullWidth: false,
     },
     {
         id: 'forum',
         label: 'FORUM',
         icon: '💬',
+        route: '/(tabs)/Forum',
+        adminOnly: false,
+        fullWidth: false,
     },
     {
         id: 'room',
         label: 'ROOM\nAVAILABILITY',
         icon: '🚪',
         fullWidth: true,
+        route: '/(tabs)/BookRoom',
+        adminOnly: false,
+    },
+    {
+        id: 'QR',
+        label: 'CREATE\nQR CODE',
+        icon: '🔑',
+        fullWidth: true,
+        route: '/(tabs)/QR_Admin',
+        adminOnly: true, // ← only admins see this
     },
 ];
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
+    const { name, role } = useAuth();
+
+    console.log("HomeScreen - name:", name, "role:", role);
+
+    const visibleItems = menuItems.filter(item => !item.adminOnly || role === 'Admin');
 
     return (
         <ScrollView
@@ -43,15 +72,18 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
         >
             <View style={styles.logoContainer}>
-                <Image source={require('../Photo/logo.png')} style={styles.logoImage} resizeMode="contain" />
+                <Image
+                    source={require('../Photo/logo.png')}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                />
             </View>
 
-            {/* Welcome */}
-            <Text style={styles.welcome}>WELCOME, NAME!</Text>
+            <Text style={styles.welcome}>WELCOME, {name ?? 'USER'}!</Text>
 
-            {/* Grid */}
             <View style={styles.grid}>
-                {menuItems
+                {/* Grid cards — non full width */}
+                {visibleItems
                     .filter(item => !item.fullWidth)
                     .reduce<(typeof menuItems[0])[][]>((rows, item, i) => {
                         if (i % 2 === 0) rows.push([item]);
@@ -65,6 +97,7 @@ export default function HomeScreen() {
                                     key={item.id}
                                     style={styles.card}
                                     activeOpacity={0.85}
+                                    onPress={() => item.route ? router.push(item.route as any) : null}
                                 >
                                     <Text style={styles.cardIcon}>{item.icon}</Text>
                                     <Text style={styles.cardLabel}>{item.label}</Text>
@@ -73,14 +106,15 @@ export default function HomeScreen() {
                         </View>
                     ))}
 
-                {/* Full width last card */}
-                {menuItems
+                {/* Full width cards */}
+                {visibleItems
                     .filter(item => item.fullWidth)
                     .map(item => (
                         <TouchableOpacity
                             key={item.id}
                             style={[styles.card, styles.cardFullWidth]}
                             activeOpacity={0.85}
+                            onPress={() => item.route ? router.push(item.route as any) : null}
                         >
                             <Text style={styles.cardIcon}>{item.icon}</Text>
                             <Text style={styles.cardLabel}>{item.label}</Text>
@@ -104,8 +138,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
     },
-
-    // Logo
     logoContainer: {
         marginBottom: 32,
         alignItems: 'center',
@@ -114,14 +146,6 @@ const styles = StyleSheet.create({
         width: 120,
         height: 80,
     },
-    logoText: {
-        fontSize: 28,
-        fontWeight: '800',
-        color: PURPLE_DARK,
-        letterSpacing: 4,
-    },
-
-    // Welcome
     welcome: {
         fontSize: 20,
         fontWeight: '800',
@@ -129,8 +153,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
         marginBottom: 28,
     },
-
-    // Grid
     grid: {
         width: '100%',
         gap: 14,
@@ -139,8 +161,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 14,
     },
-
-    // Cards
     card: {
         flex: 1,
         backgroundColor: PURPLE,

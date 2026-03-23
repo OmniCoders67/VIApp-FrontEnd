@@ -1,9 +1,14 @@
 ﻿import React from "react";
-import { StyleSheet, View, Text } from "react-native";
+import {StyleSheet, View, Text, TouchableOpacity} from "react-native";
+import {router} from "expo-router";
 
 const Announcement = () => {
     return (
         <View style={styles.announcement}>
+            {/* Back Arrow */}
+            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/main')}>
+                <Text style={styles.backArrow}>←</Text>
+            </TouchableOpacity>
             <Text style={styles.title}>
                 Announcements{"\n"}&{"\n"}Events
             </Text>
@@ -48,6 +53,18 @@ const styles = StyleSheet.create({
         left: 53,
         justifyContent: "center",
         alignItems: "center"
+    },
+    backButton: {
+        position: "absolute",
+        top: 60,
+        left: 20,
+        zIndex: 10,
+        padding: 8,
+    },
+    backArrow: {
+        fontSize: 28,
+        color: "#43254a",
+        fontWeight: "600",
     },
     importantCard: {
         top: 185,

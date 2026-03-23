@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { register } from "../../api/auth";
+import { login, LoginRequest } from "@/api/auth";
 import {
   View,
   Text,
@@ -9,50 +9,55 @@ import {
   SafeAreaView,
   StatusBar,
   Image,
+  Alert,
 } from 'react-native';
-import {router} from "expo-router";
+import { router } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
-// Geometric logo matching the VIApp brand mark
-const VIAppLogo = () => (
-    <Image
-        source={require('../Photo/logo.png')}
-        style={{ width: 200, height: 100 }}
-        resizeMode="contain"
-    />
-);
-
-export default function RegisterScreen({ navigation }: any) {
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { saveToken } = useAuth();
 
-  const handleCreateAccount = async () => {
-    if (password !== confirmPassword) {
-      console.log("Passwords do not match");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter your email and password.');
       return;
     }
 
     try {
-      const user = await register(email, password);
-      console.log("User created:", user);
+      const request: LoginRequest = { email, password };
+      const response = await login(request);
+      console.log('Logged in:', response);
+
+      await saveToken(response.token); // ← already awaited, but state updates are async
+
+      // small delay to let context state update before navigating
+      setTimeout(() => {
+        router.replace('/(tabs)/main');
+      }, 100);
+
     } catch (e) {
       if (e instanceof Error) {
-        console.log(e.message);
+        Alert.alert('Login Failed', e.message);
       }
     }
   };
 
   return (
-        <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#f0f0f0" />
+      <SafeAreaView style={styles.safe}>
+        <StatusBar barStyle="dark-content" backgroundColor="#efefef" />
         <View style={styles.container}>
 
           {/* Logo */}
-          <VIAppLogo />
+          <Image
+              source={require('../Photo/logo.png')}
+              style={{ width: 200, height: 100 }}
+              resizeMode="contain"
+          />
 
           {/* Title */}
-          <Text style={styles.title}>REGISTER</Text>
+          <Text style={styles.title}>LOGIN</Text>
 
           {/* Form */}
           <View style={styles.form}>
@@ -67,40 +72,24 @@ export default function RegisterScreen({ navigation }: any) {
             />
             <TextInput
                 style={styles.input}
-                placeholder="NAME"
-                placeholderTextColor="#888"
-                autoCapitalize="words"
-                value={name}
-                onChangeText={setName}
-            />
-            <TextInput
-                style={styles.input}
                 placeholder="PASSWORD"
                 placeholderTextColor="#888"
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
             />
-            <TextInput
-                style={styles.input}
-                placeholder="CONFIRM PASSWORD"
-                placeholderTextColor="#888"
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-            />
           </View>
 
-          {/* Button */}
-          <TouchableOpacity style={styles.button} onPress={handleCreateAccount} activeOpacity={0.85}>
-            <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
+          {/* Login Button */}
+          <TouchableOpacity style={styles.button} onPress={handleLogin} activeOpacity={0.85}>
+            <Text style={styles.buttonText}>LOGIN</Text>
           </TouchableOpacity>
 
-          {/* Login link */}
-          <View style={styles.loginRow}>
-            <Text style={styles.loginText}>ALREADY HAVE AN ACCOUNT? </Text>
-            <TouchableOpacity onPress={() => router.push('/')}>
-              <Text style={styles.loginLink}>LOG IN</Text>
+          {/* Sign Up link */}
+          <View style={styles.signupRow}>
+            <Text style={styles.signupText}>DON'T HAVE AN ACCOUNT? </Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/Register')}>
+              <Text style={styles.signupLink}>SIGN UP</Text>
             </TouchableOpacity>
           </View>
 
@@ -118,60 +107,21 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 36,
     backgroundColor: '#efefef',
   },
-
-  // Logo
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#5b9bd5',
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 28,
-    backgroundColor: '#fff',
-  },
-  logoBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
-  },
-  logoAppText: {
-    position: 'absolute',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#5a3e8a',
-    letterSpacing: 0.5,
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  logoVI: {
-    color: '#2c2c2c',
-  },
-  logoApp2: {
-    color: '#7b4fa8',
-  },
-
-  // Title
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1a1a1a',
     letterSpacing: 2,
-    marginBottom: 24,
+    marginBottom: 28,
+    marginTop: 16,
   },
-
-  // Form
   form: {
     width: '100%',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   input: {
     width: '100%',
@@ -186,8 +136,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     backgroundColor: '#fff',
   },
-
-  // Button
   button: {
     width: '100%',
     height: 50,
@@ -195,7 +143,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     shadowColor: '#3b2060',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -208,19 +156,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.5,
   },
-
-  // Login row
-  loginRow: {
+  signupRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  loginText: {
+  signupText: {
     fontSize: 11,
     color: '#555',
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  loginLink: {
+  signupLink: {
     fontSize: 11,
     color: '#3b2060',
     fontWeight: '700',
